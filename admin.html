@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeTrace Admin - Report Review</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Apple Liquid Glass Colors */
+            --primary: #007AFF;
+            --success: #34C759;
+            --danger: #FF3B30;
+            --warning: #FF9500;
+
+            /* Glass Effect */
+            --glass: rgba(255, 255, 255, 0.72);
+            --glass-border: rgba(255, 255, 255, 0.35);
+
+            /* Text */
+            --text: #1d1d1f;
+            --text-secondary: #86868b;
+
+            /* Shadows */
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f5f5f7 0%, #e5e5ea 100%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--text), var(--primary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .badge {
+            background: var(--warning);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            color: var(--text);
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-shadow: var(--shadow);
+        }
+
+        .back-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-shadow: var(--shadow);
+        }
+
+        .tab:hover {
+            border-color: var(--primary);
+            color: var(--text);
+        }
+
+        .tab.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .stat-card.pending .value {
+            color: var(--warning);
+        }
+
+        .stat-card.accepted .value {
+            color: var(--success);
+        }
+
+        .stat-card.rejected .value {
+            color: var(--danger);
+        }
+
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .report-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.25s;
+            box-shadow: var(--shadow);
+        }
+
+        .report-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .report-image {
+            width: 100%;
+            height: 200px;
+            background: #e5e5ea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            overflow: hidden;
+        }
+
+        .report-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .report-body {
+            padding: 20px;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .report-id {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .risk-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .risk-badge.high {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .risk-badge.medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .risk-badge.low {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .report-description {
+            color: var(--text);
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .report-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .tag {
+            padding: 4px 10px;
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+
+        .report-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .action-btn.accept {
+            background: var(--success);
+            color: white;
+        }
+
+        .action-btn.accept:hover {
+            background: #059669;
+        }
+
+        .action-btn.reject {
+            background: var(--danger);
+            color: white;
+        }
+
+        .action-btn.reject:hover {
+            background: #dc2626;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-badge.accepted {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .status-badge.rejected {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-muted);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--success);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        /* Admin Risk Rating */
+        .risk-rating {
+            margin: 12px 0;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .risk-rating-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .risk-stars {
+            display: flex;
+            gap: 4px;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .risk-star {
+            color: #4b5563;
+            transition: all 0.15s;
+            user-select: none;
+        }
+
+        .risk-star:hover {
+            transform: scale(1.1);
+        }
+
+        .risk-star.active {
+            color: #fbbf24;
+        }
+
+        .risk-star.danger {
+            color: #ef4444;
+        }
+
+        .rating-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div>
+            <h1>🛡️ SafeTrace Admin</h1>
+            <p style="color: var(--text-muted); margin-top: 4px;">Review and manage safety reports</p>
+        </div>
+        <a href="/" class="back-btn">← Back to Map</a>
+    </div>
+
+    <div class="stats" id="stats">
+        <div class="stat-card pending">
+            <div class="value" id="pendingCount">-</div>
+            <div class="label">Pending Review</div>
+        </div>
+        <div class="stat-card accepted">
+            <div class="value" id="acceptedCount">-</div>
+            <div class="label">Accepted</div>
+        </div>
+        <div class="stat-card rejected">
+            <div class="value" id="rejectedCount">-</div>
+            <div class="label">Rejected</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" id="totalCount">-</div>
+            <div class="label">Total Reports</div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-filter="pending" onclick="filterReports('pending')">⏳ Pending</button>
+        <button class="tab" data-filter="accepted" onclick="filterReports('accepted')">✅ Accepted</button>
+        <button class="tab" data-filter="rejected" onclick="filterReports('rejected')">❌ Rejected</button>
+        <button class="tab" data-filter="all" onclick="filterReports('all')">📋 All</button>
+    </div>
+
+    <div class="reports-grid" id="reportsGrid">
+        <div class="loading">Loading reports...</div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let allReports = [];
+        let currentFilter = 'pending';
+
+        async function loadReports() {
+            try {
+                const resp = await fetch('/api/reports');
+                const data = await resp.json();
+                allReports = data.reports || [];
+
+                updateStats();
+                renderReports();
+            } catch (err) {
+                console.error('Failed to load reports:', err);
+                document.getElementById('reportsGrid').innerHTML = `
+          <div class="empty-state">
+            <div class="icon">❌</div>
+            <p>Failed to load reports</p>
+          </div>
+        `;
+            }
+        }
+
+        function updateStats() {
+            const pending = allReports.filter(r => r.status === 'pending').length;
+            const accepted = allReports.filter(r => r.status === 'accepted').length;
+            const rejected = allReports.filter(r => r.status === 'rejected').length;
+
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('acceptedCount').textContent = accepted;
+            document.getElementById('rejectedCount').textContent = rejected;
+            document.getElementById('totalCount').textContent = allReports.length;
+        }
+
+        function filterReports(filter) {
+            currentFilter = filter;
+
+            // Update tab styles
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.filter === filter);
+            });
+
+            renderReports();
+        }
+
+        function renderReports() {
+            const grid = document.getElementById('reportsGrid');
+
+            let filtered = allReports;
+            if (currentFilter !== 'all') {
+                filtered = allReports.filter(r => r.status === currentFilter);
+            }
+
+            // Sort by date (newest first)
+            filtered.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">${currentFilter === 'pending' ? '✨' : '📭'}</div>
+            <p>${currentFilter === 'pending' ? 'No pending reports!' : 'No reports in this category'}</p>
+          </div>
+        `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(report => renderReportCard(report)).join('');
+        }
+
+        function renderReportCard(report) {
+            const date = new Date(report.submitted_at).toLocaleString();
+            const imageUrl = report.image_file ? `/api/reports/image/${report.id}` : null;
+
+            let actionsHtml = '';
+            if (report.status === 'pending') {
+                actionsHtml = `
+          <div class="risk-rating">
+            <div class="risk-rating-label">⚠️ Set Risk Level (1=Safe, 5=Very Dangerous)</div>
+            <div class="risk-stars" id="stars-${report.id}">
+              <span class="risk-star" data-rating="1" onclick="setAdminRating('${report.id}', 1)">★</span>
+              <span class="risk-star" data-rating="2" onclick="setAdminRating('${report.id}', 2)">★</span>
+              <span class="risk-star" data-rating="3" onclick="setAdminRating('${report.id}', 3)">★</span>
+              <span class="risk-star" data-rating="4" onclick="setAdminRating('${report.id}', 4)">★</span>
+              <span class="risk-star" data-rating="5" onclick="setAdminRating('${report.id}', 5)">★</span>
+            </div>
+            <div class="rating-text" id="rating-text-${report.id}">Click to set risk level</div>
+          </div>
+          <div class="report-actions">
+            <button class="action-btn accept" onclick="reviewReport('${report.id}', 'accept')">
+              ✅ Accept
+            </button>
+            <button class="action-btn reject" onclick="reviewReport('${report.id}', 'reject')">
+              ❌ Reject
+            </button>
+          </div>
+        `;
+            } else {
+                const adminRating = report.admin_rating || report.risk_score;
+                const riskLevel = adminRating >= 0.7 ? 'high' : (adminRating >= 0.4 ? 'medium' : 'low');
+                actionsHtml = `
+          <div class="status-badge ${report.status}">
+            ${report.status === 'accepted' ? `✅ Accepted (Risk: ${(adminRating * 100).toFixed(0)}%)` : '❌ Rejected'}
+          </div>
+        `;
+            }
+
+            return `
+        <div class="report-card">
+          <div class="report-image">
+            ${imageUrl ? `<img src="${imageUrl}" alt="Report image" onerror="this.parentElement.innerHTML='📷'">` : '📷'}
+          </div>
+          <div class="report-body">
+            <div class="report-header">
+              <span class="report-id">ID: ${report.id}</span>
+            </div>
+            <p class="report-description">${report.description || 'No description provided'}</p>
+            <div class="report-tags">
+              ${(report.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
+            </div>
+            <div class="report-meta">
+              <span>📍 ${report.lat.toFixed(4)}, ${report.lng.toFixed(4)}</span>
+              <span>${date}</span>
+            </div>
+            ${actionsHtml}
+          </div>
+        </div>
+      `;
+        }
+
+        // Store admin ratings per report
+        let adminRatings = {};
+
+        function setAdminRating(reportId, rating) {
+            adminRatings[reportId] = rating;
+
+            // Update star display
+            const stars = document.querySelectorAll(`#stars-${reportId} .risk-star`);
+            stars.forEach(star => {
+                const starRating = parseInt(star.dataset.rating);
+                star.classList.toggle('active', starRating <= rating);
+                // Red for high risk
+                if (starRating <= rating && rating >= 4) {
+                    star.classList.add('danger');
+                } else {
+                    star.classList.remove('danger');
+                }
+            });
+
+            // Update text
+            const texts = ['', '✅ Safe', '🟡 Low Risk', '🟠 Moderate', '🔴 High Risk', '⛔ Very Dangerous'];
+            document.getElementById(`rating-text-${reportId}`).textContent = texts[rating];
+        }
+
+        async function reviewReport(reportId, decision) {
+            // Check if rating is set for accept
+            if (decision === 'accept' && !adminRatings[reportId]) {
+                showToast('Please set a risk level first!', true);
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '⏳';
+
+            // Convert 1-5 rating to 0-1 risk score (1=safe=0.1, 5=dangerous=1.0)
+            const riskScore = decision === 'accept' ? (adminRatings[reportId] * 0.2) : 0.5;
+
+            try {
+                const resp = await fetch('/api/reports/review', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        report_id: reportId,
+                        decision: decision,
+                        admin_notes: '',
+                        admin_rating: riskScore
+                    })
+                });
+
+                const result = await resp.json();
+
+                if (result.success) {
+                    showToast(`Report ${decision}ed! Score change: ${result.score_change > 0 ? '+' : ''}${result.score_change.toFixed(3)}`);
+
+                    // Update local data
+                    const report = allReports.find(r => r.id === reportId);
+                    if (report) {
+                        report.status = decision === 'accept' ? 'accepted' : 'rejected';
+                        report.admin_rating = riskScore;
+                    }
+
+                    updateStats();
+                    renderReports();
+                } else {
+                    showToast('Failed to review report', true);
+                }
+            } catch (err) {
+                console.error('Review error:', err);
+                showToast('Error reviewing report', true);
+            }
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.toggle('error', isError);
+            toast.classList.add('visible');
+            setTimeout(() => toast.classList.remove('visible'), 3000);
+        }
+
+        // Initial load
+        loadReports();
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadReports, 30000);
+    </script>
+</body>
+
+</html>

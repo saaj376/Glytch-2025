@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>OSM Safety Heatmap</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+
+<body style="margin:0; padding:0;">
+<div id="map" style="width:100%; height:100vh;"></div>
+
+<script>
+  // Initialize map at Anna Nagar
+  var map = L.map('map').setView([13.087, 80.210], 15);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+
+  // Load the safety heatmap
+  fetch("safety_heatmap.geojson")
+    .then(r => r.json())
+    .then(geo => {
+
+        L.geoJSON(geo, {
+            style: feature => {
+                let zIndex = 1;
+                let weight = 8;
+                let opacity = 1.0;
+                
+                if (feature.properties.color === "#ffaa00") zIndex = 3; // yellow on top
+                else if (feature.properties.color === "#ff0066") zIndex = 2; // red middle
+                else if (feature.properties.color === "#00ff00") zIndex = 3; // green on top
+                else if (feature.properties.color === "#666666") {
+                    weight = 2;  // thinner gray lines
+                    opacity = 0.5;  // semi-transparent gray
+                    zIndex = 0;  // bottom layer
+                }
+                
+                return {
+                    color: feature.properties.color,
+                    weight: weight,
+                    opacity: opacity,
+                    zIndex: zIndex
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                if (feature.properties.score !== null) {
+                    let popupContent = "Segment " + feature.properties.segment_id + 
+                                      ": Score " + feature.properties.score + 
+                                      "<br>Coords: " + JSON.stringify(feature.geometry.coordinates);
+                    layer.bindPopup(popupContent);
+                    
+                    // Add markers for segment endpoints to see connections
+                    let coords = feature.geometry.coordinates;
+                    let start = L.marker(coords[0]).addTo(map);
+                    let end = L.marker(coords[coords.length - 1]).addTo(map);
+                    start.bindPopup("Start of segment " + feature.properties.segment_id);
+                    end.bindPopup("End of segment " + feature.properties.segment_id);
+                }
+            }
+        }).addTo(map);
+
+        console.log("Loaded heatmap:", geo);
+    })
+    .catch(err => console.error("ERROR loading GeoJSON:", err));
+</script>
+</body>
+</html>

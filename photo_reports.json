@@ -1,0 +1,53 @@
+[
+  {
+    "id": "b0e90366",
+    "image_file": "b0e90366.jpg",
+    "description": "issues",
+    "tags": [
+      "suspicious"
+    ],
+    "lat": 12.839413603168296,
+    "lng": 80.15503894303369,
+    "risk_score": 0.5,
+    "segment_id": 191,
+    "status": "accepted",
+    "submitted_at": "2025-12-10T15:25:07.043407",
+    "reviewed_at": "2025-12-10T15:25:21.056350",
+    "admin_notes": "",
+    "admin_rating": 0.2
+  },
+  {
+    "id": "bde5d8d0",
+    "image_file": "bde5d8d0.jpg",
+    "description": "",
+    "tags": [
+      "suspicious"
+    ],
+    "lat": 12.839426451957117,
+    "lng": 80.15510761051272,
+    "risk_score": 0.5,
+    "segment_id": 191,
+    "status": "accepted",
+    "submitted_at": "2025-12-10T15:35:56.763922",
+    "reviewed_at": "2025-12-10T15:36:14.577562",
+    "admin_notes": "",
+    "admin_rating": 0.4
+  },
+  {
+    "id": "a97da010",
+    "image_file": "a97da010.jpg",
+    "description": "need to see",
+    "tags": [
+      "poor_lighting"
+    ],
+    "lat": 12.839451620183347,
+    "lng": 80.15513135478969,
+    "risk_score": 0.5,
+    "segment_id": 191,
+    "status": "accepted",
+    "submitted_at": "2025-12-10T15:44:46.481908",
+    "reviewed_at": "2025-12-10T15:44:58.815171",
+    "admin_notes": "",
+    "admin_rating": 0.2
+  }
+]

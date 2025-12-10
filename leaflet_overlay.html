@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Safety Heatmap - Chennai</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { height: 100vh; }
+        body { margin: 0; padding: 0; }
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        .legend {
+            line-height: 18px;
+            color: #555;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    // Initialize map centered on Chennai
+    var map = L.map('map').setView([13.0827, 80.2707], 12);
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Safety score color mapping
+    function getSafetyColor(score) {
+        if (score === null || score === undefined) return '#cccccc';
+        if (score >= 0.8) return '#00ff00';      // Bright green - Very safe
+        if (score >= 0.6) return '#66ff00';      // Light green - Safe
+        if (score >= 0.5) return '#ffaa00';      // Orange-yellow - Medium
+        if (score >= 0.3) return '#ff6600';      // Orange - Unsafe
+        return '#ff0066';                       // Pink-red - Very unsafe
+    }
+
+    // Load and display safety heatmap
+    fetch('safety_heatmap.geojson')
+        .then(response => response.json())
+        .then(geojson => {
+            console.log('Loaded safety heatmap:', geojson.features.length, 'segments');
+            
+            // Add GeoJSON layer to map
+            L.geoJSON(geojson, {
+                style: function(feature) {
+                    return {
+                        color: getSafetyColor(feature.properties.score),
+                        weight: 6,
+                        opacity: 0.9,
+                        zIndex: feature.properties.score !== null ? 10 : 1
+                    };
+                },
+                onEachFeature: function(feature, layer) {
+                    if (feature.properties.score !== null) {
+                        var score = feature.properties.score;
+                        var safety = score >= 0.8 ? 'Very Safe' : 
+                                    score >= 0.6 ? 'Safe' : 
+                                    score >= 0.5 ? 'Medium' : 
+                                    score >= 0.3 ? 'Unsafe' : 'Very Unsafe';
+                        
+                        var popupContent = `
+                            <div style="min-width: 200px;">
+                                <strong>Segment ${feature.properties.segment_id}</strong><br>
+                                Safety Score: ${(score * 100).toFixed(0)}%<br>
+                                Safety Level: <strong>${safety}</strong><br>
+                                <small>Click for more details</small>
+                            </div>
+                        `;
+                        layer.bindPopup(popupContent);
+                        
+                        // Add hover effects
+                        layer.on('mouseover', function() {
+                            this.setStyle({
+                                weight: 8,
+                                opacity: 1.0
+                            });
+                        });
+                        
+                        layer.on('mouseout', function() {
+                            this.setStyle({
+                                weight: 6,
+                                opacity: 0.9
+                            });
+                        });
+                    }
+                }
+            }).addTo(map);
+        })
+        .catch(error => {
+            console.error('Error loading safety heatmap:', error);
+        });
+
+    // Add legend
+    var legend = L.control({position: 'bottomright'});
+    legend.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info legend');
+        div.innerHTML = `
+            <h4>Safety Levels</h4>
+            <i style="background: #00ff00"></i> Very Safe (80-100%)<br>
+            <i style="background: #66ff00"></i> Safe (60-80%)<br>
+            <i style="background: #ffaa00"></i> Medium (50-60%)<br>
+            <i style="background: #ff6600"></i> Unsafe (30-50%)<br>
+            <i style="background: #ff0066"></i> Very Unsafe (0-30%)<br>
+            <i style="background: #cccccc"></i> No Data
+        `;
+        return div;
+    };
+    legend.addTo(map);
+
+    // Add search functionality
+    var searchControl = L.control({position: 'topleft'});
+    searchControl.onAdd = function(map) {
+        var div = L.DomUtil.create('div', 'info');
+        div.innerHTML = `
+            <input type="text" id="searchInput" placeholder="Search location..." 
+                   style="padding: 5px; width: 200px; margin: 5px;">
+            <button onclick="searchLocation()" style="padding: 5px;">Search</button>
+        `;
+        return div;
+    };
+    searchControl.addTo(map);
+
+    // Search function
+    function searchLocation() {
+        var query = document.getElementById('searchInput').value;
+        if (query) {
+            // Using Nominatim for geocoding
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        var result = data[0];
+                        var lat = parseFloat(result.lat);
+                        var lon = parseFloat(result.lon);
+                        map.setView([lat, lon], 15);
+                        
+                        // Add marker for searched location
+                        L.marker([lat, lon])
+                            .addTo(map)
+                            .bindPopup(result.display_name)
+                            .openPopup();
+                    }
+                })
+                .catch(error => console.error('Search error:', error));
+        }
+    }
+
+    // Add click-to-set markers for route planning
+    var startMarker = null;
+    var endMarker = null;
+
+    map.on('click', function(e) {
+        if (!startMarker) {
+            startMarker = L.marker(e.latlng, {color: 'green'})
+                .addTo(map)
+                .bindPopup('Start Point')
+                .openPopup();
+        } else if (!endMarker) {
+            endMarker = L.marker(e.latlng, {color: 'red'})
+                .addTo(map)
+                .bindPopup('End Point')
+                .openPopup();
+        } else {
+            // Clear existing markers
+            map.removeLayer(startMarker);
+            map.removeLayer(endMarker);
+            startMarker = null;
+            endMarker = null;
+        }
+    });
+
+    // Instructions
+    var info = L.control();
+    info.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info');
+        div.innerHTML = `
+            <h4>Safety Heatmap</h4>
+            <strong>Click on map:</strong> Set start/end points<br>
+            <strong>Colored lines:</strong> Safety-rated segments<br>
+            <strong>Gray lines:</strong> No safety data<br>
+            <strong>Hover:</strong> Highlight segments
+        `;
+        return div;
+    };
+    info.addTo(map);
+</script>
+
+</body>
+</html>
